@@ -1,0 +1,200 @@
+// A line-following robot (object-based version)
+//
+// This program models a robot that follows a line. Each cycle the robot reads
+// its line sensor, works out how hard to steer, and sets its two drive motors.
+// Each part of the robot is a class, and a CRobot holds those parts and puts
+// them to work.
+//
+// Copyright (c) Donald Dansereau, 2026
+
+//--Includes-------------------------------------------------------------------
+#include <iostream>
+#include <string>
+
+//--Consts---------------------------------------------------------------------
+const int NumCycles = 4;
+const double BaseSpeed = 0.5;
+const double LowBatterySpeed = 0.25;
+const int FullBatteryCharge = 100;
+const int BatteryDrainPerCycle = 10;
+const int LowBatteryThreshold = 80;
+
+//---CLineSensor---------------------------------------------------------------
+class CLineSensor
+{
+  public:
+    CLineSensor();
+    int Read();
+
+  private:
+    int mCycle;
+};
+
+//---CController---------------------------------------------------------------
+class CController
+{
+  public:
+    CController();
+    double ComputeSteering( int aError );
+
+  private:
+    double mLastError;
+};
+
+//---CMotor--------------------------------------------------------------------
+class CMotor
+{
+  public:
+    CMotor( const std::string& aName );
+    void SetSpeed( double aSpeed );
+    void Report();
+
+  private:
+    std::string mName;
+    double mSpeed;
+};
+
+//---CBattery------------------------------------------------------------------
+class CBattery
+{
+  public:
+    CBattery();
+    void Drain();
+    bool IsLow();
+    void Report();
+
+  private:
+    int mCharge;
+};
+
+//---CRobot--------------------------------------------------------------------
+class CRobot
+{
+  public:
+    CRobot();
+    void Update();
+    void Report();
+
+  private:
+    CLineSensor mSensor;
+    CController mController;
+    CMotor mLeftMotor;
+    CMotor mRightMotor;
+    CBattery mBattery;
+};
+
+//---main----------------------------------------------------------------------
+int main()
+{
+  CRobot robot;
+
+  for( int i = 0; i < NumCycles; ++i )
+  {
+    robot.Update();
+    robot.Report();
+  }
+
+  return 0;
+}
+
+//---CLineSensor Implementation------------------------------------------------
+CLineSensor::CLineSensor()
+  : mCycle( 0 )
+{
+}
+//---
+int CLineSensor::Read()
+{
+  const int Track[NumCycles] = { 2, 1, -1, -2 };
+
+  int reading = Track[ mCycle ];
+  ++mCycle;
+
+  return reading;
+}
+
+//---CController Implementation------------------------------------------------
+CController::CController()
+  : mLastError( 0.0 )
+{
+}
+//---
+double CController::ComputeSteering( int aError )
+{
+  double steering = 0.1 * aError + 0.05 * ( aError - mLastError );
+  mLastError = aError;
+
+  return steering;
+}
+
+//---CMotor Implementation-----------------------------------------------------
+CMotor::CMotor( const std::string& aName )
+  : mName( aName ),
+    mSpeed( 0.0 )
+{
+}
+//---
+void CMotor::SetSpeed( double aSpeed )
+{
+  mSpeed = aSpeed;
+}
+//---
+void CMotor::Report()
+{
+  std::cout << mName << " motor " << mSpeed;
+}
+
+//---CBattery Implementation---------------------------------------------------
+CBattery::CBattery()
+  : mCharge( FullBatteryCharge )
+{
+}
+//---
+void CBattery::Drain()
+{
+  mCharge -= BatteryDrainPerCycle;
+}
+//---
+bool CBattery::IsLow()
+{
+  return mCharge < LowBatteryThreshold;
+}
+//---
+void CBattery::Report()
+{
+  std::cout << "Battery " << mCharge;
+}
+
+//---CRobot Implementation-----------------------------------------------------
+CRobot::CRobot()
+  : mLeftMotor( "Left" ),
+    mRightMotor( "Right" )
+{
+}
+//---
+void CRobot::Update()
+{
+  mBattery.Drain();
+
+  int error = mSensor.Read();
+  double steering = mController.ComputeSteering( error );
+  double forwardSpeed = BaseSpeed;
+
+  if( mBattery.IsLow() )
+  {
+    forwardSpeed = LowBatterySpeed;
+  }
+
+  mLeftMotor.SetSpeed( forwardSpeed + steering );
+  mRightMotor.SetSpeed( forwardSpeed - steering );
+}
+//---
+void CRobot::Report()
+{
+  mBattery.Report();
+  std::cout << ", ";
+  mLeftMotor.Report();
+  std::cout << ", ";
+  mRightMotor.Report();
+  std::cout << std::endl;
+}
