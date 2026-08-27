@@ -10,20 +10,6 @@
 #include <iostream>
 #include <string>
 
-
-//---CHeater-------------------------------------------------------------------
-// A CHeater is a device whose power draw depends on its heat setting.
-class CHeater : public CDevice
-{
-  public:
-    CHeater( const std::string& aName );
-
-    void SetHeat( int aHeatSetting );
-    int PowerDraw();
-
-  private:
-    int mHeatSetting;
-};
 //---CDevice-------------------------------------------------------------------
 // A CDevice is a piece of equipment with a name that can be switched on or off.
 class CDevice
@@ -68,7 +54,19 @@ class CLed : public CDevice
   private:
     int mBrightness;
 };
+//---CHeater-------------------------------------------------------------------
+// A CHeater is a device whose power draw depends on its heat setting.
+class CHeater : public CDevice
+{
+  public:
+    CHeater( const std::string& aName );
 
+    void SetHeat( int aHeatSetting );
+    int PowerDraw();
+
+  private:
+    int mHeatSetting;
+};
 //---main----------------------------------------------------------------------
 // Sets up a motor and an LED, then prints each device's power draw and the
 // running total.
@@ -163,7 +161,6 @@ int CLed::PowerDraw()
 {
   return IsOn() ? mBrightness / 10 : 0;
 }
-
 
 //---CHeater Implementation----------------------------------------------------
 CHeater::CHeater( const std::string& aName )
